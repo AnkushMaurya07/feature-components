@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Location</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Maps JavaScript API with Places library -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZFpao15zGHMGkWON6-jKBlfCOKTVEJyQ&libraries=places&callback=initMap"></script>
+
+  <style>
+    #map {
+      height: 400px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="container my-5">
+  <h3 class="text-center mb-4">Select a Location</h3>
+
+  <!-- Search bar for places autocomplete -->
+  <input id="pac-input" class="form-control mb-3" type="text" placeholder="Search for a place">
+
+  <div id="map" class="mb-3 border border-primary"></div>
+  <div class="d-flex justify-content-center">
+    <button id="confirm-btn" class="btn btn-success me-2" style="display:none;">Confirm Location</button>
+    <button id="reset-btn" class="btn btn-danger" style="display:none;">Reset</button>
+  </div>
+  <p id="latlong-info" class="text-center mt-3"></p>
+
+  <script>
+    let map;
+    let marker;
+    let autocomplete;
+
+    function initMap() {
+      // Initialize the map
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -34.397, lng: 150.644 },
+        zoom: 8,
+      });
+
+      // Get the user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const userLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            map.setCenter(userLocation);
+            map.setZoom(14); // Closer zoom to user's location
+          },
+          function() {
+            handleLocationError(true, map.getCenter());
+          }
+        );
+      } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, map.getCenter());
+      }
+
+      // Add click listener on the map to place a marker
+      map.addListener('click', function(event) {
+        placeMarker(event.latLng);
+        document.getElementById('confirm-btn').style.display = 'block';
+        document.getElementById('reset-btn').style.display = 'block';
+      });
+
+      // Autocomplete functionality
+      const input = document.getElementById('pac-input');
+      autocomplete = new google.maps.places.Autocomplete(input);
+
+      autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          // Move map to selected place
+          map.setCenter(place.geometry.location);
+          map.setZoom(14);
+          placeMarker(place.geometry.location);
+          document.getElementById('confirm-btn').style.display = 'block';
+          document.getElementById('reset-btn').style.display = 'block';
+        } else {
+          alert("No details available for the selected place.");
+        }
+      });
+
+      // Confirm location button
+      document.getElementById('confirm-btn').addEventListener('click', function() {
+        const latLng = marker.getPosition();
+           
+        const lat = latLng.lat();
+        const lng = latLng.lng();
+        document.getElementById('id_latitude').value = `${lat}`;
+        document.getElementById('id_longitude').value = `${lng}`;
+        alert('Location confirmed! Latitude: ' + latLng.lat() + ', Longitude: ' + latLng.lng());
+        // You can now send latLng.lat() and latLng.lng() to your backend or use it as needed
+      });
+
+      // Reset button
+      document.getElementById('reset-btn').addEventListener('click', function() {
+        if (marker) {
+          marker.setMap(null);
+        }
+        document.getElementById('confirm-btn').style.display = 'none';
+        document.getElementById('reset-btn').style.display = 'none';
+        document.getElementById('latlong-info').innerText = '';
+      });
+    }
+
+    function placeMarker(location) {
+      if (marker) {
+        marker.setMap(null);
+      }
+      marker = new google.maps.Marker({
+        position: location,
+        map: map,
+      });   
+
+      document.getElementById('latlong-info').innerText =
+        'Latitude: ' + location.lat() + ', Longitude: ' + location.lng();
+    }
+
+    function handleLocationError(browserHasGeolocation, pos) {
+      alert(
+        browserHasGeolocation
+          ? 'Error: The Geolocation service failed.'
+          : "Error: Your browser doesn't support geolocation."
+      );
+    }
+
+    window.onload = initMap;
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .border-radius-class {
+            border: 7px;
+        }
+    
+        .container-for-image {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+    
+        .centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    
+        .outlined-input-new {
+            position: relative;
+            width: 100%;
+        }
+    
+        .tags-input-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid #ced4da;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: text;
+        }
+    
+        .tags-input-wrapper .tag {
+            background-color: lightgrey;
+            color: black;
+            padding: 5px 6px;
+            border-radius: 15px;
+            margin-right: 5px;
+            display: inline-flex;
+            align-items: center;
+        }
+    
+        .tags-input-wrapper .tag .remove-tag {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    
+        .tags-input-wrapper .tags-input {
+            border: none;
+            outline: none;
+    
+        }
+    
+        .tags-input:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: transparent;
+        }
+    
+        .toggle-container {
+            display: flex;
+            align-items: center;
+        }
+    
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 140px;
+            height: 30px;
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+    
+        .toggle-input {
+            display: none;
+        }
+    
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+    
+        .toggle-slider::before {
+            content: "";
+            position: absolute;
+            width: 70%;
+            height: 100%;
+            background-color: #185494;
+            border-radius: 15px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            transform: translateX(-15px);
+            z-index: 1;
+        }
+    
+        .toggle-input:checked+.toggle-slider::before {
+            transform: translateX(70px);
+        }
+    
+        .toggle-text {
+            position: relative;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 2;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+    
+        .toggle-text.minimum {
+            margin-left: 10px;
+        }
+    
+        .toggle-input:not(:checked)+.toggle-slider .minimum {
+            color: #fff;
+        }
+    
+        .toggle-input:not(:checked)+.toggle-slider .every {
+            color: #666;
+        }
+    
+        .toggle-input:checked+.toggle-slider .minimum {
+            color: #666;
+        }
+    
+        .toggle-input:checked+.toggle-slider .every {
+            color: #fff;
+        }
+    
+    
+        /* that is for crop the image */
+        /* Fix the height and width of the modal */
+        #cropModal1 .modal-dialog {
+            max-width: 500px;
+            /* Set the width of the modal */
+            margin: auto;
+        }
+    
+        #cropModal1 .modal-content {
+            height: 500px;
+            /* Set the height of the modal */
+            display: flex;
+            flex-direction: column;
+        }
+    
+        #cropModal1 .modal-body {
+            flex: 1;
+            /* Allow the modal body to fill available space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+    
+        #cropModal1 .modal-body img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            /* Ensure the image fits within the modal */
+        }
+    
+        #cropModal1 .modal-footer {
+            justify-content: space-between;
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+</head>
+<body>
+    <div class="container mt-3">
+    <div class="nd-heading p-1">
+        <h2><b>{% if product %}Edit Product{% else %}Add Product{% endif %}</b></h2>
+    </div>
+    <div class="nav-breaker"></div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row mt-3">
+
+            <div class="col-12 col-md-8">
+
+                <div class="card p-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Image 1 -->
+                            <div class="col-6">
+                                <div class="text-center mb-2 position-relative">
+                                    <label for="add_pro_image1" class="card position-relative" id="container-for-image1" style="cursor: pointer;">
+                                        <img id="preview-image1" 
+                                            src="{% if product and product.add_pro_image1 %}{{ product.add_pro_image1.url }}{% else %}/static/images/pro_image.png{% endif %}" 
+                                            alt="Image 1" class="resized-image" style="max-width: 100%; height: auto;">
+                                    </label>
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute" 
+                                        style="top: 5px; right: 5px; display: none;" 
+                                        id="remove-image1" onclick="removeImage('preview-image1', 'add_pro_image1', 'cropped_image1', 'remove-image1')">
+                                        ✖
+                                    </button>
+                                    <input type="file" class="form-control-file" id="add_pro_image1" name="add_pro_image1"
+                                        onchange="handleImageSelection(event, 'container-for-image1', 'add_pro_image1')" 
+                                        style="display: none;">
+                                    <input type="hidden" id="cropped_image1" name="cropped_image1">
+                                </div>
+                            </div>
+
+                            <!-- Image 2 -->
+                            <div class="col-6">
+                                <div class="text-center mb-2 position-relative">
+                                    <label for="add_pro_image2" class="card position-relative" id="container-for-image2" style="cursor: pointer;">
+                                        <img id="preview-image2" 
+                                            src="{% if product and product.add_pro_image2 %}{{ product.add_pro_image2.url }}{% else %}/static/images/pro_image.png{% endif %}" 
+                                            alt="Image 2" class="resized-image" style="max-width: 100%; height: auto;">
+                                    </label>
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute" 
+                                        style="top: 5px; right: 5px; display: none;" 
+                                        id="remove-image2" onclick="removeImage('preview-image2', 'add_pro_image2', 'cropped_image2', 'remove-image2')">
+                                        ✖
+                                    </button>
+                                    <input type="file" class="form-control-file" id="add_pro_image2" name="add_pro_image2"
+                                        onchange="handleImageSelection(event, 'container-for-image2', 'add_pro_image2')" 
+                                        style="display: none;">
+                                    <input type="hidden" id="cropped_image2" name="cropped_image2">
+                                </div>
+                            </div>
+
+                            <!-- Image 3 -->
+                            <div class="col-6">
+                                <div class="text-center mb-2 position-relative">
+                                    <label for="add_pro_image3" class="card position-relative" id="container-for-image3" style="cursor: pointer;">
+                                        <img id="preview-image3" 
+                                            src="{% if product and product.add_pro_image3 %}{{ product.add_pro_image3.url }}{% else %}/static/images/pro_image.png{% endif %}" 
+                                            alt="Image 3" class="resized-image" style="max-width: 100%; height: auto;">
+                                    </label>
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute" 
+                                        style="top: 5px; right: 5px; display: none;" 
+                                        id="remove-image3" onclick="removeImage('preview-image3', 'add_pro_image3', 'cropped_image3', 'remove-image3')">
+                                        ✖
+                                    </button>
+                                    <input type="file" class="form-control-file" id="add_pro_image3" name="add_pro_image3"
+                                        onchange="handleImageSelection(event, 'container-for-image3', 'add_pro_image3')" 
+                                        style="display: none;">
+                                    <input type="hidden" id="cropped_image3" name="cropped_image3">
+                                </div>
+                            </div>
+
+                            <!-- Image 4 -->
+                            <div class="col-6">
+                                <div class="text-center mb-2 position-relative">
+                                    <label for="add_pro_image4" class="card position-relative" id="container-for-image4" style="cursor: pointer;">
+                                        <img id="preview-image4" 
+                                            src="{% if product and product.add_pro_image4 %}{{ product.add_pro_image4.url }}{% else %}/static/images/pro_image.png{% endif %}" 
+                                            alt="Image 4" class="resized-image" style="max-width: 100%; height: auto;">
+                                    </label>
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute" 
+                                        style="top: 5px; right: 5px; display: none;" 
+                                        id="remove-image4" onclick="removeImage('preview-image4', 'add_pro_image4', 'cropped_image4', 'remove-image4')">
+                                        ✖
+                                    </button>
+                                    <input type="file" class="form-control-file" id="add_pro_image4" name="add_pro_image4"
+                                        onchange="handleImageSelection(event, 'container-for-image4', 'add_pro_image4')" 
+                                        style="display: none;">
+                                    <input type="hidden" id="cropped_image4" name="cropped_image4">
+                                </div>
+                            </div>
+                            <!-- Modal for cropping image -->
+                            <div id="cropModal1" class="modal fade" tabindex="-1" aria-labelledby="cropModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="cropModalLabel">Crop Image</h5>
+                                            <!-- Close button -->
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <img id="imageForCrop1" src="" alt="Select Image to Crop" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <!-- Close button inside footer -->
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary"
+                                                onclick="saveCroppedImage()">Save Cropped Image</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class=" col-lg-11 col-sm-8 col-md-11">
+                                    <div class="mt-3">
+                                        <div class="outlined-input-new">
+                                            <input type="text" class="outlined-input-new rounded" id="prod_name"
+                                                name="prod_name" placeholder=" "
+                                                value="{{ product.prod_name|default:'' }}" required>
+                                            <label for="outlined-input-new">Product Name</label>
+                                            {% if errors.prod_name %}
+                                            <div class="toast align-items-center show bg-danger text-white" role="alert"
+                                                aria-live="assertive" aria-atomic="true"
+                                                style="position: absolute; top: 50; right: 0; z-index: 1055;">
+                                                <div class="d-flex">
+                                                    <div class="toast-body">
+                                                        {{ errors.prod_name }}
+                                                    </div>
+                                                    <button type="button" class="btn-close me-2 m-auto"
+                                                        data-bs-dismiss="toast" aria-label="Close"></button>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class=" col-lg-11 col-sm-8 col-md-11">
+                                    <div class="form-group  mt-3 ">
+                                        <select class="form-select hk-form-select rounded" id="add_pro_Category"
+                                            name="add_pro_Category" required>
+                                            <option value="" disabled selected hidden></option>
+                                            {% for category in categories %}
+                                            <option value="{{ category.id }}" {% if product and product.add_pro_Category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <label class="form-label">Category</label>
+                                    </div>
+                                </div>
+                                <div
+                                    class=" col-lg-1 col-sm-4 col-md-1  d-flex justify-content-center align-items-center">
+                                    <div id="svg-container" class="mb-3">
+                                        <svg id="toggle-svg" width="30" height="30" viewBox="0 0 30 30" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg" data-bs-toggle="modal"
+                                            data-bs-target="#categoryModal">
+                                            <path
+                                                d="M15 3C8.37258 3 3 8.37258 3 15C3 21.6274 8.37258 27 15 27C21.6274 27 27 21.6274 27 15C27 8.37258 21.6274 3 15 3ZM0 15C0 6.71573 6.71573 0 15 0C23.2843 0 30 6.71573 30 15C30 23.2843 23.2843 30 15 30C6.71573 30 0 23.2843 0 15ZM15 7.5C15.8284 7.5 16.5 8.17157 16.5 9V13.5H21C21.8284 13.5 22.5 14.1716 22.5 15C22.5 15.8284 21.8284 16.5 21 16.5H16.5V21C16.5 21.8284 15.8284 22.5 15 22.5C14.1716 22.5 13.5 21.8284 13.5 21V16.5H9C8.17157 16.5 7.5 15.8284 7.5 15C7.5 14.1716 8.17157 13.5 9 13.5H13.5V9C13.5 8.17157 14.1716 7.5 15 7.5Z"
+                                                fill="#9D9D9D" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-sm-6 col-md-6">
+                                    <div class="mt-3">
+                                        <div class="outlined-input-new">
+                                            <input type="text" class="outlined-input-new rounded" id="product_code"
+                                                name="add_pro_Product_Code" placeholder=" "
+                                                value="{{ product.add_pro_Product_Code|default:'' }}" required>
+                                            <label for="outlined-input-new">Product Code</label>
+                                            {% if errors.add_pro_Product_Code %}
+                                            <div class="toast align-items-center show bg-danger text-white" role="alert"
+                                                aria-live="assertive" aria-atomic="true"
+                                                style="position: absolute; top: 50; right: 0; z-index: 1055;">
+                                                <div class="d-flex">
+                                                    <div class="toast-body">
+                                                        {{ errors.add_pro_Product_Code }}
+                                                    </div>
+                                                    <button type="button" class="btn-close me-2 m-auto"
+                                                        data-bs-dismiss="toast" aria-label="Close"></button>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6 col-sm-6 col-md-6">
+                                    <div class="mt-3">
+                                        <div class="outlined-input-new">
+                                            <input type="text" class="outlined-input-new rounded" id="bar_code"
+                                                name="add_pro_Bar_Code" placeholder=" "
+                                                value="{{ product.add_pro_Bar_Code|default:'' }}">
+                                            <label for="outlined-input-new">Bar Code</label>
+                                            {% if errors.add_pro_Bar_Code %}
+                                            <div class="toast align-items-center show bg-danger text-white" role="alert"
+                                                aria-live="assertive" aria-atomic="true"
+                                                style="position: absolute; top: 50; right: 0; z-index: 1055;">
+                                                <div class="d-flex">
+                                                    <div class="toast-body">
+                                                        {{ errors.add_pro_Bar_Code }}
+                                                    </div>
+                                                    <button type="button" class="btn-close me-2 m-auto"
+                                                        data-bs-dismiss="toast" aria-label="Close"></button>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-sm-6 col-md-6">
+                                    <div class="form-group  mt-3 p-0 m-0 ">
+                                        <select class="form-select hk-form-select rounded" id="add_pro_GST"
+                                        name="add_pro_GST" required>
+                                        <option value="" disabled selected hidden></option>
+                                        {% for gst in gst_rates %}
+                                                <option value="{{ gst.id }}" {% if product and product.gst.id == gst.id %}selected{% endif %}>{{ gst.gst_rate }}%</option>
+                                        {% endfor %}
+                                        </select>
+                                        <label class="form-label">GST%</label>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-sm-6 col-md-6">
+                                    <div class="mt-3">
+                                        <div class="outlined-input-new">
+                                            <input type="text" class="outlined-input-new rounded" id="hsn_code"
+                                                name="add_pro_HSN_Code"
+                                                value="{{ product.add_pro_HSN_Code|default:'' }}" maxlength="10"
+                                                placeholder=" ">
+                                            <label for="outlined-input-new">HSN Code</label>
+                                            {% if errors.add_pro_HSN_Code %}
+                                            <div class="toast align-items-center show bg-danger text-white" role="alert"
+                                                aria-live="assertive" aria-atomic="true"
+                                                style="position: absolute; top: 50; right: 0; z-index: 1055;">
+                                                <div class="d-flex">
+                                                    <div class="toast-body">
+                                                        {{ errors.add_pro_HSN_Code }}
+                                                    </div>
+                                                    <button type="button" class="btn-close me-2 m-auto"
+                                                        data-bs-dismiss="toast" aria-label="Close"></button>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-sm-6 col-md-6">
+                                    <div class="form-group  mt-3 p-0 m-0">
+                                        <select class="form-select hk-form-select rounded" id="add_pro_Order_Index"
+                                        name="add_pro_Order_Index" required>
+                                        <option value="" disabled selected hidden></option>
+                                        <option value="1" {% if product.add_pro_Order_Index == '1' %}selected{% endif %}>1</option>
+                                        <option value="2" {% if product.add_pro_Order_Index == '2' %}selected{% endif %}>2</option>
+                                        <option value="3" {% if product.add_pro_Order_Index == '3' %}selected{% endif %}>3</option>
+                                        <option value="4" {% if product.add_pro_Order_Index == '4' %}selected{% endif %}>4</option>
+                                        <option value="5" {% if product.add_pro_Order_Index == '5' %}selected{% endif %}>5</option>
+                                        <option value="6" {% if product.add_pro_Order_Index == '6' %}selected{% endif %}>6</option>
+                                        <option value="7" {% if product.add_pro_Order_Index == '7' %}selected{% endif %}>7</option>
+                                        <option value="8" {% if product.add_pro_Order_Index == '8' %}selected{% endif %}>8</option>
+                                        <option value="9" {% if product.add_pro_Order_Index == '9' %}selected{% endif %}>9</option>
+                                        <option value="10" {% if product.add_pro_Order_Index == '10' %}selected{% endif %}>10</option>
+                                        </select>
+                                        <label class="form-label">sequence</label>
+                                    </div>
+                                </div>
+                                <!-- <div class="col-lg-6 col-sm-12 col-md-6">
+                                <div class=" d-flex justify-content-center align-items-center p-0 m-0 mt-4 ">
+                                    <div class="d-flex ">
+                                        <span class="fs-6">New</span>&nbsp;<span>Arrival</span>&nbsp;
+                                    </div>
+                                    <div class="form-check ms-0 ms-lg-2 ms-sm-3 ms-md-1">
+                                        <input class="form-check-input " type="radio" id="add_pro_New_Arrival_no" name="add_pro_New_Arrival" value="no" 
+                                        {% if product and product.add_pro_New_Arrival == "no" %}checked{% endif %}>
+                                        <label class="form-check-label" for="flexRadioDefault1">
+                                            Off
+                                        </label>
+                                    </div>
+                                    &nbsp;
+                                    <div class="form-check ms-0 ms-lg-3 ms-sm-3 ms-md-1">
+                                        <input class="form-check-input" type="radio" id="add_pro_New_Arrival_yes" name="add_pro_New_Arrival" value="yes" 
+                                        {% if product and product.add_pro_New_Arrival == "yes" %}checked{% endif %}>
+                                        <label class="form-check-label" for="flexRadioDefault1">
+                                            On
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>  -->
+
+                                <div class="col-lg-6 col-sm-12 col-md-6">
+                                    <div class=" d-flex justify-content-center align-items-center p-0 m-0 mt-4 ">
+                                        <div class="d-flex ">
+                                            <span class="fs-6 me-5">New Arrival</span>
+                                        </div>
+                                        <div class="toggle-container mb-1">
+                                            <label class="toggle">
+                                                <input type="checkbox" class="toggle-input" id="toggle-input"
+                                                {% if product and product.add_pro_New_Arrival == "yes" %}checked{% else %}unchecked{% endif %}
+                                                onchange="updateInputValue(this)">
+                                                <span class="toggle-slider">
+                                                    <span class="toggle-text minimum">Off</span>
+                                                    <span class="toggle-text every" style="padding: 10px;">On</span>
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <!-- Hidden radio inputs for form submission -->
+                                        <label class="d-none">
+                                            <input class="align-middle" type="radio" name="add_pro_New_Arrival" value="yes"
+                                                {% if product and product.add_pro_New_Arrival == "yes" %}checked{% endif %} required> On
+                                        </label>
+                                        <label class="d-none">
+                                            <input class="align-middle" type="radio" name="add_pro_New_Arrival" value="no"
+                                                {% if product and product.add_pro_New_Arrival == "no" %}checked{% else %}checked{% endif %} required> Off
+                                        </label>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <div class="outlined-input-new mt-3">
+                                            <input type="text" class="outlined-input-new p-4 rounded" placeholder=" "
+                                                required maxlength="200" id="tag-input" oninput="updateCharCount()"
+                                                name="add_pro_Description"
+                                                value="{{ product.add_pro_Description|default:'' }}">
+                                            <label for="tag-input">Description</label>
+                                        </div>
+                                        <span class="text-end">
+                                            <small style="float: right;" id="tag-count">0/200</small>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-5">
+                                        <div class="outlined-input-new">
+                                            <div class="tags-input-wrapper" id="tags-container">
+                                                <input type="text" class="tags-input" placeholder="" id="add_pro_Tags"
+                                                    name="add_pro_Tags" value="{{ product.add_pro_Tags|default:'' }}"
+                                                    maxlength="200" oninput="updateTagCharCount()"
+                                                    style="border: none;" />
+                                                <label for="tags-input">Tags</label>
+                                            </div>
+
+                                        </div>
+                                        <span class="text-end">
+                                            <small style="float: left;" class="ms-3">Enter a comma after each
+                                                tag</small>
+                                            <small style="float: right;" id="tag2-count">0/200</small>
+                                        </span>
+                                    </div>
+                                </div>
+
+
+                                <!-- Sagar 1/17/25 Update for validation -->
+                                <div class="col-lg-4 col-sm-6 col-md-6">
+                                    <div class="text-center">
+                                        <div class="input-group mb-3">
+                                            <div class="outlined-input-new">
+                                                <input type="number" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_MRP" name="add_pro_MRP"
+                                                    value="{{ product.add_pro_MRP|default:'' }}" required maxlength="7"
+                                                    oninput="validateInputs()" required>
+                                                <label for="outlined-input-new">MRP</label>
+                                            </div>
+                                            <div id="error_MRP" class="error-message"
+                                                style="color: red; font-size: 12px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-sm-6 col-md-6">
+                                    <div class="text-center">
+                                        <div class="input-group mb-3">
+                                            <div class="outlined-input-new">
+                                                <input type="number" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_MSP" name="add_pro_MSP"
+                                                    value="{{ product.add_pro_MSP|default:'' }}" required maxlength="7"
+                                                    oninput="validateInputs()">
+                                                <label for="outlined-input-new">MSP</label>
+                                            </div>
+                                            <div id="error_MSP" class="error-message"
+                                                style="color: red; font-size: 12px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- <div class="col-lg-4 col-sm-6 col-md-6">
+                                    <div class="text-center">
+                                        <div class="input-group mb-3">
+                                            <div class="outlined-input-new">
+                                                <input type="number" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_MSC" name="add_pro_MSC"
+                                                    value="{{ product.add_pro_MSC|default:'' }}" maxlength="7"
+                                                    oninput="validateInputs()">
+                                                <label for="outlined-input-new">MSC</label>
+                                            </div>
+                                            <div id="error_MSC" class="error-message"
+                                                style="color: red; font-size: 12px;"></div>
+                                        </div>
+                                    </div>
+                                </div> -->
+                                {% if product %}
+
+                                <div class="col-lg-4 col-sm-6 col-md-6">
+                                    <div class="form-group form-check">
+                                        <input type="checkbox" class="form-check-input" id="add_pro_display"
+                                            name="add_pro_display" {% if product.add_pro_display %}checked{% endif %}>
+                                        <label class="form-check-label" for="add_pro_display">Display Product</label>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-sm-12 col-md-12 mt-3">
+                                    <div class="text-center">
+                                        <div class="input-group mb-3">
+                                            <div class="outlined-input-new">
+                                                {% if product %}
+                                                <input type="text" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_status" name="add_pro_status"
+                                                    value="{{ product.add_pro_status }}" readonly>
+                                                {% else %}
+                                                <input type="text" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_status" name="add_pro_status" value="Not Set" readonly
+                                                    maxlength="7" oninput="this.value = this.value.slice(0, 7);">
+                                                {% endif %}
+                                                <label for="outlined-input-new">Status</label>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-12 col-sm-12 col-md-12">
+                                    <div class="text-center">
+                                        <div class="input-group mb-3">
+                                            <div class="outlined-input-new">
+                                                <input type="text" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_submit_on" name="add_pro_submit_on"
+                                                    value="{{ product.add_pro_submit_on|date:'Y-m-d H:i:s' }}" readonly>
+                                                <label for="add_pro_submit_on">Submitted On</label>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-sm-12 col-md-12">
+                                    <div class="text-center">
+                                        <div class="input-group mb-3">
+                                            <div class="outlined-input-new">
+                                                <input type="text" class="outlined-input-new rounded" placeholder=" "
+                                                    id="add_pro_remark" name="add_pro_remark" value="{% if product.add_pro_verified == False and product.add_pro_display == False %}
+                                    Unverified and Locked
+                                {% elif product.add_pro_verified == False and product.add_pro_display == True %}
+                                    Unverified
+                                {% elif product.add_pro_verified == True and product.add_pro_display == False %}
+                                    Locked
+                                {% else %}
+                                    No remarks available
+                                {% endif %}" readonly>
+                                                <label for="add_pro_remark">Remarks</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="container text-center">
+                            <button type="submit" class="btn bg-red-color text-white fw-bold btn-lg px-md-5 w-75">
+                                {% if product %}Update Product{% else %}Add Product{% endif %}</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card p-3" style="height: 500px;">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col text-start">
+                                <svg width="30" height="30" viewBox="0 0 30 30" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M15 30C23.2842 30 30 23.2842 30 15C30 6.71572 23.2842 0 15 0C6.71572 0 0 6.71572 0 15C0 23.2842 6.71572 30 15 30Z"
+                                        fill="#185494" />
+                                    <path
+                                        d="M10.502 10.5C10.502 5.24991 18.752 5.24996 18.752 10.5C18.752 14.25 15.002 13.4998 15.002 17.9998"
+                                        stroke="white" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path d="M15 24.0181L15.0177 23.9985" stroke="white" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col text-start">
+                                <div class="blue-text">
+                                    <h4><b>Add Product</b></h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col text-start">
+                                <h6>
+                                    Note: The verification time is 72 hours for
+                                    every new product you added.
+                                </h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+    <!-- Modal for Add/Edit Category -->
+    <div class="modal fade" id="categoryModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="categoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex flex-column">
+
+                    <!-- Form for Adding/Editing Category -->
+                    <form id="category-form" class="d-flex flex-column gap-0" style="height: 100px; width: 380px;">
+                        {% csrf_token %}
+                        <input type="hidden" id="category_id" name="category_id">
+                        <div class="outlined-input-new">
+                            <input type="text" class="outlined-input-new rounded" id="category_name" name="name"
+                                placeholder=" " required>
+                            <label for="category_name">Category</label>
+                        </div>
+                        <button type="submit" class="btn btn bg-red-color text-white fw-bold">Save
+                            Category</button>
+                    </form>
+                    <hr>
+                    <!-- List of Categories -->
+                    <div class="form-group overflow-y-scroll" style="height: 150px; width: 380px;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <!-- <th scope="col">Category Name</th> -->
+                                    <!-- <th scope="col">Actions</th> -->
+                                    <h6 class="text-center">Category Name</h6>
+                                </tr>
+                            </thead>
+                            <tbody id="category-list">
+                                {% for category in categories %}
+                                <tr data-id="{{ category.id }}">
+                                    <td>{{ category.name }}</td>
+                                    <td>
+                                        <!-- <button type="button"
+                                                    class="btn btn-info btn-sm edit-category">Edit</button> -->
+
+                                        <svg width="18" class="edit-category" height="18" viewBox="0 0 18 18"
+                                            fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M2 16H3.425L13.2 6.225L11.775 4.8L2 14.575V16ZM0 18V13.75L13.2 0.575C13.4 0.391667 13.6208 0.25 13.8625 0.15C14.1042 0.05 14.3583 0 14.625 0C14.8917 0 15.15 0.05 15.4 0.15C15.65 0.25 15.8667 0.4 16.05 0.6L17.425 2C17.625 2.18333 17.7708 2.4 17.8625 2.65C17.9542 2.9 18 3.15 18 3.4C18 3.66667 17.9542 3.92083 17.8625 4.1625C17.7708 4.40417 17.625 4.625 17.425 4.825L4.25 18H0ZM12.475 5.525L11.775 4.8L13.2 6.225L12.475 5.525Z"
+                                                fill="#5F6368" />
+                                        </svg>
+
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/up_js/up_profile_update.js"></script>
+    <!-- Include Cropper.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css">
+    <!-- Include Cropper.js JS -->
+    <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
+    <!-- That is for Modal -->
+    <script>
+        $(document).ready(function () {
+            // Handle form submission
+            $("#category-form").submit(function (e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+                $.post("{% url 'manage_category_and_product' %}", formData, function (response) {
+                    if (response.status === "success") {
+                        // alert(response.message);
+                        // Reload the page to reflect the changes
+                        location.reload();
+                    } else {
+                        // alert(response.message);
+                    }
+                });
+            });
+
+            // Handle edit button click
+            $(document).on("click", ".edit-category", function () {
+                const row = $(this).closest("tr");
+                const id = row.data("id");
+                const name = row.find("td:first").text();
+                $("#category_id").val(id);
+                $("#category_name").val(name);
+            });
+        });
+    </script>
+    <!-- That is for Images -->
+    <script>
+        function resizeAndPreviewImage(event, containerId) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+
+                img.onload = function () {
+                    // Create a canvas to resize the image
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const fixedWidth = 700;
+                    const fixedHeight = 700;
+
+                    // Maintain aspect ratio while resizing
+                    const aspectRatio = img.width / img.height;
+                    if (aspectRatio > 1) {
+                        canvas.width = fixedWidth;
+                        canvas.height = fixedWidth / aspectRatio;
+                    } else {
+                        canvas.height = fixedHeight;
+                        canvas.width = fixedHeight * aspectRatio;
+                    }
+
+                    // Draw the resized image on the canvas
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Replace the container's content with the resized image
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = `<img src="${canvas.toDataURL()}" alt="Resized Image"  height="360">`;
+                };
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+    </script>
+    <!-- That is For Cross Button -->
+    <script>
+        function handleImageSelection(event, imageId, buttonId, containerId) {
+            const input = event.target;
+            const image = document.getElementById(imageId);
+            const removeBtn = document.getElementById(buttonId);
+    
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    image.src = e.target.result; // Update image preview
+                    removeBtn.style.display = "block"; // Show remove button
+                };
+                reader.readAsDataURL(input.files[0]);
+    
+                // Call the cropping function for the specific image
+                openCropModal(event, containerId);
+            }
+        }
+    
+        function removeImage(imageId, inputId, hiddenInputId, buttonId) {
+            document.getElementById(inputId).value = ""; // Reset file input
+            document.getElementById(hiddenInputId).value = ""; // Reset hidden input
+            document.getElementById(imageId).src = "/static/images/pro_image.png"; // Restore default image
+            document.getElementById(buttonId).style.display = "none"; // Hide remove button
+        }
+    </script>
+    <!-- That is For Troggle -->
+    <script>
+        // Set default state for toggle input
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleInput = document.getElementById('toggle-input');
+            const radioOn = document.querySelector('input[name="add_pro_New_Arrival"][value="yes"]');
+            const radioOff = document.querySelector('input[name="add_pro_New_Arrival"][value="no"]');
+
+            // If no product value exists, the toggle defaults to Off (unchecked)
+            if (!toggleInput.checked) {
+                radioOff.checked = true; // Set radio button to "Off" by default
+            }
+        });
+
+        // Function to update the radio button based on checkbox state
+        function updateInputValue(checkbox) {
+            const radioOn = document.querySelector('input[name="add_pro_New_Arrival"][value="yes"]');
+            const radioOff = document.querySelector('input[name="add_pro_New_Arrival"][value="no"]');
+
+            // Update the corresponding radio button based on the checkbox state
+            if (checkbox.checked) {
+                radioOn.checked = true;
+                radioOff.checked = false;
+            } else {
+                radioOn.checked = false;
+                radioOff.checked = true;
+            }
+        }
+    </script>
+    <!-- That is For Crop the image -->
+    <script>
+        let cropper;
+
+        function openCropModal(event, containerId, inputId) {
+            // Get the file from input
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imgElement = document.getElementById('imageForCrop1');
+                    imgElement.src = e.target.result;
+        
+                    // Store the container ID and input ID
+                    imgElement.dataset.containerId = containerId;
+                    imgElement.dataset.inputId = inputId;  // ✅ Store input field ID properly
+        
+                    // Open the modal
+                    $('#cropModal1').modal('show');
+        
+                    // Initialize Cropper.js
+                    if (cropper) {
+                        cropper.destroy(); // Destroy any previous cropper instance
+                    }
+                    cropper = new Cropper(imgElement, {
+                        aspectRatio: 1, // 1:1 aspect ratio
+                        viewMode: 1,
+                        autoCropArea: 0.8,
+                        responsive: true,
+                        checkOrientation: false
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function saveCroppedImage() {
+            const imgElement = document.getElementById('imageForCrop1');
+            const containerId = imgElement.dataset.containerId;
+            const inputId = imgElement.dataset.inputId;
+        
+            if (!inputId) {
+                console.error("❌ Missing input ID for cropped image.");
+                return;
+            }
+        
+            // Get the cropped canvas from Cropper.js
+            const canvas = cropper.getCroppedCanvas({
+                width: 1080,
+                height: 1080,
+            });
+        
+            // Convert the cropped image into a Blob
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    console.error("❌ Failed to generate cropped image blob.");
+                    return;
+                }
+        
+                const timestamp = Date.now();
+                const newFile = new File([blob], `cropped_${inputId}_${timestamp}.png`, { type: 'image/png' });
+        
+                // ✅ Debugging output
+                console.log("🟢 Cropped File Created:", newFile);
+        
+                // Find the correct input field (add_pro_image1, add_pro_image2, etc.)
+                const fileInput = document.getElementById(inputId);
+                if (fileInput) {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(newFile);
+                    fileInput.files = dataTransfer.files; // ✅ Assign the cropped image
+        
+                    // ✅ Debugging check
+                    console.log("🟢 File added to input:", fileInput.files);
+                } else {
+                    console.error("❌ Input field not found:", inputId);
+                }
+        
+                // ✅ Update the preview image
+                const previewImage = document.querySelector(`#${containerId} img`);
+                if (previewImage) {
+                    previewImage.src = URL.createObjectURL(blob);
+                } else {
+                    console.error("❌ Preview image not found for:", containerId);
+                }
+        
+                // ✅ Close the modal
+                $('#cropModal1').modal('hide');
+            }, 'image/png');
+        }
+        
+
+
+    </script>
+
+    
+    <script>
+        function validateInputs() {
+            const mrp = parseFloat(document.getElementById('add_pro_MRP').value) || 0;
+            const msp = parseFloat(document.getElementById('add_pro_MSP').value) || 0;
+    
+            // Clear existing error messages
+            document.getElementById('error_MRP').innerText = '';
+            document.getElementById('error_MSP').innerText = '';
+    
+            // Validate MSP
+            if (msp > mrp) {
+                document.getElementById('error_MSP').innerText = `MSP (${msp}) cannot be greater than MRP (${mrp}).`;
+                document.getElementById('add_pro_MSP').value = '';
+            }
+        }
+    </script>
+    <script>
+
+        let isOriginalSvg = true;
+
+
+        document.getElementById('svg-container').addEventListener('click', function () {
+            const svgContainer = document.getElementById('svg-container');
+            const card = document.getElementById('card');
+
+            if (isOriginalSvg) {
+
+                card.style.display = 'block';
+                svgContainer.innerHTML = `
+      <svg fill="#9D9D9D" height="25px" width="25px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+        viewBox="0 0 490 490" xml:space="preserve">
+        <polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 
+        489.292,457.678 277.331,245.004 489.292,32.337 "/>
+      </svg>`;
+            } else {
+
+                card.style.display = 'none';
+                svgContainer.innerHTML = `
+      <svg id="toggle-svg" width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 3C8.37258 3 3 8.37258 3 15C3 21.6274 8.37258 27 15 27C21.6274 27 27 21.6274 27 15C27 8.37258 21.6274 3 15 3ZM0 15C0 6.71573 6.71573 0 15 0C23.2843 0 30 6.71573 30 15C30 23.2843 23.2843 30 15 30C6.71573 30 0 23.2843 0 15ZM15 7.5C15.8284 7.5 16.5 8.17157 16.5 9V13.5H21C21.8284 13.5 22.5 14.1716 22.5 15C22.5 15.8284 21.8284 16.5 21 16.5H16.5V21C16.5 21.8284 15.8284 22.5 15 22.5C14.1716 22.5 13.5 21.8284 13.5 21V16.5H9C8.17157 16.5 7.5 15.8284 7.5 15C7.5 14.1716 8.17157 13.5 9 13.5H13.5V9C13.5 8.17157 14.1716 7.5 15 7.5Z" fill="#9D9D9D"/>
+      </svg>`;
+            }
+
+
+            isOriginalSvg = !isOriginalSvg;
+        });
+
+
+        function updateCharCount() {
+            const input = document.getElementById('tag-input');
+            const count = input.value.length;
+            document.getElementById('tag-count').textContent = `${count}/200`;
+        }
+
+        function updateTagCharCount() {
+            const input = document.getElementById('tags-input');
+            const count = input.value.length;
+            document.getElementById('tag2-count').textContent = `${count}/200`;
+        }
+
+        function triggerUpload(inputId, displayId, errorId) {
+            document.getElementById(inputId).click();
+        }
+        function previewAndValidateImage(inputId, displayId, errorId) {
+            const fileInput = document.getElementById(inputId);
+            const errorText = document.getElementById(errorId);
+            const imageDisplay = document.getElementById(displayId);
+            const file = fileInput.files[0];
+            if (file) {
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
+                img.onload = function () {
+                    if (img.width === 1080 && img.height === 1080) {
+                        errorText.style.display = 'none';
+                        imageDisplay.src = img.src;
+                    } else {
+                        errorText.style.display = 'block';
+                        fileInput.value = '';
+                    }
+                    URL.revokeObjectURL(img.src);
+                };
+            }
+        }
+
+
+
+        function removeTag(tagElement, tagText) {
+            tags = tags.filter(tag => tag !== tagText);
+            tagsContainer.removeChild(tagElement);
+            updateTagCharCount();
+        }
+
+        tagsInput.addEventListener('keydown', function (e) {
+            if (e.key === ',' || e.key === 'Enter') {
+                e.preventDefault();
+                addTag(tagsInput.value);
+            }
+        });
+
+    </script>
+    <script>
+        function previewImage(event, containerId) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                var imgElement = document.createElement('img');
+                imgElement.src = e.target.result;
+                imgElement.alt = "Selected Image";
+
+                // Find the container element and clear any previous images
+                var container = document.getElementById(containerId);
+                container.innerHTML = '';  // Clear previous image
+
+                // Append the new image to the container
+                container.appendChild(imgElement);
+            }
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+    </script>
+</body>
+</html>
+

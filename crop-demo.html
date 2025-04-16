@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Quality Image Cropper</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Cropper.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+
+    <!-- Style for the page -->
+    <style>
+        .container {
+            margin-top: 50px;
+        }
+
+        .preview-image {
+            margin-top: 20px;
+            max-width: 100%;
+            max-height: 200px;
+        }
+
+        /* Fullscreen modal */
+        .modal-lg {
+            max-width: 100% !important;
+            width: 100%;
+            height: 90%;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Image inside modal should fit properly */
+        .cropper-container {
+            max-width: 100%;
+            height: 90%;
+        }
+
+        .modal-body {
+            overflow: hidden;
+            padding: 0;
+        }
+
+        #imageToCrop {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain; /* Ensure the image stays contained within the modal */
+        }
+        .height-issue{
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="text-center">High-Quality Image Cropper</h1>
+    <div class="row justify-content-center">
+        <!-- Upload image input -->
+        <div class="col-6">
+            <label for="uploadImage" class="form-label">Upload Image</label>
+            <input type="file" class="form-control" id="uploadImage" onchange="openCropperModal(event, 0)">
+        </div>
+    </div>
+
+    <!-- Image Preview -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-6">
+            <h4>Preview:</h4>
+            <img id="imagePreview_0" class="preview-image" alt="Preview">
+        </div>
+    </div>
+</div>
+
+<!-- Cropper Modal -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content height-issue">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cropModalLabel">Crop Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="imageToCrop" src="" alt="Image to crop" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="cropImageBtn" class="btn btn-primary">Crop Image</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<!-- Cropper.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+<!-- Custom Script for Image Cropping -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cropModalElement = document.getElementById('cropModal');
+        const cropModal = new bootstrap.Modal(cropModalElement);
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropImageBtn = document.getElementById('cropImageBtn');
+        let cropper;
+        let currentImageIndex = 0;
+
+        // This function will be used to open the cropper modal for the selected image
+        window.openCropperModal = function(event, index) {
+            currentImageIndex = index;
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imageToCrop.src = e.target.result;
+                    cropModal.show();
+
+                    // Initialize cropper when the modal is shown
+                    cropModalElement.addEventListener('shown.bs.modal', function() {
+                        if (cropper) {
+                            cropper.destroy(); // Destroy previous cropper instance
+                        }
+
+                        // Create a new cropper for the current image
+                        cropper = new Cropper(imageToCrop, {
+                            aspectRatio: 2 / 3,
+                            viewMode: 2,
+                            autoCropArea: 1,
+                            responsive: true,
+                            checkOrientation: false, // Disable automatic orientation correction
+                            dragMode: 'move',
+                            zoomable: true,
+                            scalable: true,
+                            cropBoxResizable: true,
+                            center: true,
+                            rotatable: true
+                        });
+                    }, { once: true });
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // Handle cropping when the "Crop Image" button is clicked
+        cropImageBtn.addEventListener('click', function() {
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas({
+                    width: cropper.getData().width,
+                    height: cropper.getData().height,
+                });
+
+                // Now let's convert the cropped image to JPEG and compress it
+                canvas.toBlob(function(blob) {
+                    // Desired file size limit (500KB)
+                    const maxSize = 500 * 1024; // 500KB
+                    let quality = 1.0; // Start with high quality
+
+                    // Function to reduce file size by adjusting quality
+                    function compressImage() {
+                        const reader = new FileReader();
+                        reader.onloadend = function () {
+                            if (blob.size > maxSize) {
+                                // Reduce quality if file size exceeds 500KB
+                                quality -= 0.1;
+                                if (quality >= 0.1) {
+                                    canvas.toBlob(function(newBlob) {
+                                        blob = newBlob;
+                                        compressImage(); // Try compressing again with lower quality
+                                    }, 'image/jpeg', quality);
+                                } else {
+                                    console.warn('Image quality reduced too much');
+                                    showPreviewAndSave(blob); // Save the image with the lowest quality if needed
+                                }
+                            } else {
+                                showPreviewAndSave(blob); // Size is under the limit, save the image
+                            }
+                        };
+                        reader.readAsDataURL(blob);
+                    }
+
+                    // Show the final image preview and handle saving
+                    function showPreviewAndSave(finalBlob) {
+                        const file = new File([finalBlob], `cropped-image-${currentImageIndex}.jpg`, { type: 'image/jpeg' });
+
+                        // Update the image preview for the current image
+                        const previewImage = document.getElementById(`imagePreview_${currentImageIndex}`);
+                        const objectURL = URL.createObjectURL(file);
+                        previewImage.src = objectURL;
+
+                        // Create a dataTransfer object to simulate the file input change
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+
+                        // Update the input file element with the cropped image
+                        const fileInput = document.getElementById(`product_image_${currentImageIndex}`);
+                        if (fileInput) {
+                            fileInput.files = dataTransfer.files;
+                        }
+
+                        cropModal.hide(); // Close the modal after cropping
+                    }
+
+                    // Start the compression process
+                    compressImage();
+                }, 'image/jpeg', 1.0); // Start with highest quality for JPEG
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
